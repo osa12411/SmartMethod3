@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Speech to Text</title>
+    
+<style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+        textarea {
+            width: 80%;
+            max-width: 400px;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 14px;
+            color: green;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="start-record-btn">Start</button>
+    <p id="recording-instructions">Press the button to start recording.</p>
+    <textarea id="speech-to-text" name="speech_text" readonly></textarea>
+
+    <script>
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new window.SpeechRecognition();
+        recognition.lang = 'en-US';
+
+        const startRecordBtn = document.getElementById('start-record-btn');
+        const instructions = document.getElementById('recording-instructions');
+        const speechToText = document.getElementById('speech-to-text');
+
+        recognition.onstart = function() {
+            instructions.innerHTML = 'Recording...';
+        };
+
+        recognition.onspeechend = function() {
+            instructions.innerHTML = 'Recording stopped.';
+            recognition.stop();
+        };
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            speechToText.value = transcript;
+            saveText(transcript);
+        };
+
+        startRecordBtn.addEventListener('click', () => {
+            recognition.start();
+        });
+
+        function saveText(text) {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "save_voice_text.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    console.log('Text saved successfully');
+                }
+            };
+            xhr.send("speech_text=" + encodeURIComponent(text));
+        }
+    </script>
+</body>
+</html>
